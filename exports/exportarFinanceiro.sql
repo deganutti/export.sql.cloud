@@ -1,8 +1,8 @@
 select c.prazo1||','||c.prazo2||','||c.prazo3||','||c.prazo4 ||','||c.prazo5||','||c.prazo6||','||c.prazo7||','||c.prazo8||','||c.prazo9||','||c.prazo10 as "CONDICAOPAGAMENTO"
-     , 'CP' as "TIPO"
+     , 'CR' as "TIPO"
      , a.cnpj as "CNPJFILIAL"
      , v.cpf as "CPFVENDEDOR"
-     , 'BLR' as "MOEDA"
+     , 'REAL' as "MOEDA"
      , '' as "OPERACAOFINANCEIRA"
      , '' as "ESPECIE"
      , c3.cpf as "CNPJCPFCLIENTEFORNECEDOR"
@@ -12,10 +12,11 @@ select c.prazo1||','||c.prazo2||','||c.prazo3||','||c.prazo4 ||','||c.prazo5||',
      , '' as "COMPLEMENTO"
      , '' as "PERCENTUALCOMISSAO"
      , f.valorfatura as "VALORTOTALNF"
-     , max(c2.parcela) as "NRPARCELAS" --criar subselect para trazer a informação correta esta errada
+     , (select count(cc.parcela) from conritem cc where cc.codfilial = c.codfilial and cc.codped = c.codped and cc.serie = c.serie) as "NRPARCELAS" --criar subselect para trazer a informação correta esta errada
      , c2.parcela as "PARCELA"
-     , dataclarion(c2.dtvecto) as "DATAVENCIMENTO"
-     , c2.valor as "VALORPARCELA" --verificar se vai o venal ou valor com juros e tudo mais.
+     , cast(dataclarion(c2.dtvecto) as DATE) as "DATAVENCIMENTO"
+     , c2.valor - c2.valorpago  as "VALORPARCELA" 
+  --   , c2.valor as "VALORPARCELA" --verificar se vai o venal ou valor com juros e tudo mais.
      , c.codped||''||c.serie  as "NOSSONUMERO"
      , '' as "CONTADEBITO"
      , '' as "HISTORICO"
@@ -35,5 +36,10 @@ left outer join fatura f
   on f.codfilial = c.codfilial 
  and f.codped = c.codped 
  and f.serie = c.serie  
-group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,19,20,21,22,23,24
+ where c2.dtvecto >= formatar_data('01/01/2022')
+   and c2.valorpago < c2.valor  
+group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,19,20,21,22,23,24,c.codfilial, c.codped, c.serie  
+ --  order by c2.dtvecto desc
    
+   
+ --  select formatar_data('01/01/2022')
