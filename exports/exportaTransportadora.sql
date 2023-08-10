@@ -1,5 +1,5 @@
-drop table fornecedor_export;
-create table fornecedor_export as
+--drop table cliente_export;
+create table transportadora_export as
 select x."CPF/CNPJ"
      , x."INSCRICAO_ESTADUAL"
      , x."RAZAOSOCIAL"
@@ -22,8 +22,8 @@ select x."CPF/CNPJ"
     , x."CODIGO"
     , x."CNPJ_VALIDO"   
 from (
-select c.cnpj as "CPF/CNPJ"
-    , c.inscest as "INSCRICAO_ESTADUAL"
+select c.cpfcnpj as "CPF/CNPJ"
+    , c.rginscest as "INSCRICAO_ESTADUAL"
     , c.razao as "RAZAOSOCIAL"
     , c.fantasia as "NOMEFANTASIA"
     , c.cep as "CEP"
@@ -40,9 +40,9 @@ select c.cnpj as "CPF/CNPJ"
     , ajusta_tel(c.celular) as "TELEFONE_ADICIONAL"
     , ajusta_tel(c.fax) as "TELEFONE_EXTRA"
     , c.email as "EMAIL"
-    , c.site as "SITE"
-    , CAST(c.codfor as int) as "CODIGO"
-    , validaCnpjCpf(c.cnpj) as "CNPJ_VALIDO"
-from fornec c
-where c.bloqueado <> 0 
-  AND c.codfor > 0) as x
+    , '' as "SITE"
+    , CAST(c.codtrans as int) as "CODIGO"
+    , validaCnpjCpf(c.cpfcnpj) as "CNPJ_VALIDO"
+from transpor c
+where c.ativada <> 0 
+  AND c.codtrans > 0) as x

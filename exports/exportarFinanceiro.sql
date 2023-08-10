@@ -1,45 +1,74 @@
-select c.prazo1||','||c.prazo2||','||c.prazo3||','||c.prazo4 ||','||c.prazo5||','||c.prazo6||','||c.prazo7||','||c.prazo8||','||c.prazo9||','||c.prazo10 as "CONDICAOPAGAMENTO"
-     , 'CR' as "TIPO"
-     , a.cnpj as "CNPJFILIAL"
-     , v.cpf as "CPFVENDEDOR"
-     , 'REAL' as "MOEDA"
+drop table public.financeiro_exportado;
+create table public.financeiro_exportado as
+select 'IMPORTAÇÃO FINANCEIRO' as "CONDICAOPAGAMENTO" 
+     , 'CP' as "TIPO" --CR para contas a receber e CP para contas a pagar.
+     , f1.cnpj as "CNPJFILIAL"
+     , '' as "CNPJVENDEDOR"
+     , 'BLR' as "MOEDA"
      , '' as "OPERACAOFINANCEIRA"
-     , '' as "ESPECIE"
-     , c3.cpf as "CNPJCPFCLIENTEFORNECEDOR"
-     , t.descricao as "DOCUMENTO" 
-     , dataclarion(c.dtemissao) as "DATAEMISSAO"
-     , f.chavenfe as "CHAVENFE"
+     , 'REAL' as "ESPECIE"
+     , f.cnpj  as "CNPJCLIENTEFORNECEDOR"
+     , p1.seqconpag as "DOCUMENTO"
+     , dataclarion(p1.dtmovto) as "DATAEMISSAO"
+     , '' as "CHAVENFE"
      , '' as "COMPLEMENTO"
      , '' as "PERCENTUALCOMISSAO"
-     , f.valorfatura as "VALORTOTALNF"
-     , (select count(cc.parcela) from conritem cc where cc.codfilial = c.codfilial and cc.codped = c.codped and cc.serie = c.serie) as "NRPARCELAS" --criar subselect para trazer a informação correta esta errada
-     , c2.parcela as "PARCELA"
-     , cast(dataclarion(c2.dtvecto) as DATE) as "DATAVENCIMENTO"
-     , c2.valor - c2.valorpago  as "VALORPARCELA" 
-  --   , c2.valor as "VALORPARCELA" --verificar se vai o venal ou valor com juros e tudo mais.
-     , c.codped||''||c.serie  as "NOSSONUMERO"
-     , '' as "CONTADEBITO"
-     , '' as "HISTORICO"
-     , '' as "OBSERVACOES"
+     , '' as "VALORTOTALNF"
+     , (select max(c.parcela) from public.conpitem c where c.codfilial = p1.codfilial  and c.serie = p1.serie  and c.seqconpag = p1.seqconpag) as "NRPARCELAS"
+     , p2.parcela  as "PARCELA"
+     , dataclarion(p2.dtvecto) as "DATAVENCIMENTO"
+     , p2.valor as "VALORPARCELA"
+     , '' as "NOSSONUMERO"
+     , '' as "CONTADEBITO" --APENAS PARA CP
+     , '' as "HISTORICODEBITO" --APENAS PARA CP
+     , 'Conta importada Conta de origem: '||p2.nrdoccp ||' Fornecedor: '||p1.codfor  as "OBSERVACOES"
      , '' as "CENTROCUSTO"
-     , validacnpjcpf(c3.cpf) as "CNPJ_VALIDO"
-from conrec c
-inner join cliente c3 using (codfilial,codcli)
-inner join conritem c2 using (codfilial,codped,serie)
-inner join filial a using(codfilial)
-inner join tabpagto t on
-   t.codpagto = c.codpagto 
-left outer join vendedor v 
-  on v.codfilial = c.codfilial 
- and v.codvend = c.codvend
-left outer join fatura f 
-  on f.codfilial = c.codfilial 
- and f.codped = c.codped 
- and f.serie = c.serie  
- where c2.dtvecto >= formatar_data('01/01/2022')
-   and c2.valorpago < c2.valor  
-group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,19,20,21,22,23,24,c.codfilial, c.codped, c.serie  
- --  order by c2.dtvecto desc
-   
-   
- --  select formatar_data('01/01/2022')
+   --  ,* 
+  from public.conpag p1
+inner join public.conpitem p2 using (codfilial, serie, seqconpag)
+inner join public.fornec f using(codfor)
+inner join public.tabpagto t using(codpagto)
+inner join public.filial f1
+   on f1.codfilial = p1.codfilial 
+where codfor not in (
+select codfor from public.fornec  x
+where x.cnpj in ('00000000000','00000000000000','')
+)
+and p2.dtpagto = 0
+and p2.valorpago = 0
+union all
+select 'IMPORTAÇÃO FINANCEIRO' as "CONDICAOPAGAMENTO" 
+     , 'CR' as "TIPO" --CR para contas a receber e CP para contas a pagar
+     , f1.cnpj  as "CNPJFILIAL"
+     , '' as "CNPJVENDEDOR"
+     , 'BLR' as "MOEDA"
+     , '' as "OPERACAOFINANCEIRA"
+     , 'REAL' as "ESPECIE"
+     , c3.cpf  as "CNPJCLIENTEFORNECEDOR"
+     , c1.codped as "DOCUMENTO"
+     , dataclarion(c1.dtemissao) as "DATAEMISSAO"
+     , '' as "CHAVENFE"
+     , '' as "COMPLEMENTO"
+     , '' as "PERCENTUALCOMISSAO"
+     , '' as "VALORTOTALNF"
+     , (select max(c.parcela) from public.conritem c where c.codfilial = c1.codfilial  and c.serie = c1.serie  and c.codped  = c1.codped) as "NRPARCELAS"
+     , c2.parcela  as "PARCELA"
+     , dataclarion(c2.dtvecto) as "DATAVENCIMENTO"
+     , c2.valor as "VALORPARCELA"
+     , c2.nossonum as "NOSSONUMERO"
+     , '' as "CONTADEBITO" --APENAS PARA CP
+     , '' as "HISTORICODEBITO" --APENAS PARA CP
+     , 'Conta importada Nosso Número: '||c2.nossonum ||' Cliente: '||c3.codcli as "OBSERVACOES"
+     , '' as "CENTROCUSTO"
+     --  ,* 
+  from public.conrec c1
+inner join public.conritem c2 using (codfilial, serie, codped)
+inner join public.cliente c3 using(codcli) 
+inner join public.filial f1
+   on f1.codfilial = c1.codfilial 
+where c1.codcli not in (
+select codcli from public.cliente  x
+where x.cpf  in ('00000000000','00000000000000','')
+)
+and c2.dtpagto = 0
+and c2.valorpago = 0 

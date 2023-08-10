@@ -4,7 +4,7 @@ CREATE OR REPLACE FUNCTION public.ajusta_tel(fone character varying)
 AS $function$
 declare  
 WtelAjuste cursor for 
-    select translate(fone,'abcdefghaijklmnopqrstuvxwyzABCDEFGGAIJALMNOPQRSTUVXWYZ|!#@$¨&_²³£¢¬/*-+.;%{}ªº[]?/°?<>^~()`´,_=+','');
+    select translate(fone,'abcdefghaijklmnopqrstuvxwyzABCDEFGGAIJALMNOPQRSTUVXWYZ|!#@$¨&_²³£¢¬/*-+.;%{}ªº[]?/°?<>^~()":`´,_=+','');
 begin 
    OPEN WtelAjuste;
    FETCH WtelAjuste INTO tel;
