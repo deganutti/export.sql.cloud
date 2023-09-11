@@ -1,9 +1,9 @@
-drop table cliente_export;
-create table cliente_export as
+drop table vendedores_export;
+create table vendedores_export as
 select c.cpf as "CPF/CNPJ"
     , c.rg as "INSCRICAO_ESTADUAL"
-    , c.razao as "RAZAOSOCIAL"
-    , c.fantasia as "NOMEFANTASIA"
+    , c.nome as "RAZAOSOCIAL"
+    , c.nome as "NOMEFANTASIA"
     , c.cep as "CEP"
     , c.endereco as "LOGRADOURO"
     , c.numero as "NUMERO"
@@ -20,10 +20,11 @@ select c.cpf as "CPF/CNPJ"
     , ajusta_tel(c.celular) as "TELEFONE_ADICIONAL"
     , ajusta_tel(c.fax) as "TELEFONE_EXTRA"
     , c.email as "EMAIL"
-    , c.site as "SITE"
-    , c.codcli as "CODIGO"
+    , '' as "SITE"
+    , c.codvend as "CODIGO"
     , validaCnpjCpf(c.cpf) as "CNPJ_VALIDO"
-from cliente c
-where c.bloquear not in (3,5) 
-  AND c.codcli > 0
-  and c.codfilial = 1
+from vendedor c
+where codfilial = 1
+  and codvend <> 0
+  and bloqueado <>1
+order by codvend  

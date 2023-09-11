@@ -33,7 +33,9 @@ select c.cnpj as "CPF/CNPJ"
     , c.cidade as "MUNICIPIO"
     , c.bairro as "BAIRRO"
     , c.uf as "UF"
-    , retornaIBGE(c.cidade,c.uf) as "IBGE"
+    , (SELECT codibge FROM dblink('host=127.0.0.1 user=postgres password=161851 dbname=cep2018',
+               'select codcidade,nome,uf,codibge from cep_cidade')
+     AS t1(codcidade int,nome text,uf text,codibge int) where nome=unaccent(c.cidade) and uf=upper(c.uf) limit 1)as "IBGE" as "IBGE"
     , 0 as "CLIENTE"
     , 1 as "FORNECEDOR" 
     , ajusta_tel(c.fone) as "TELEFONE"
